@@ -1,0 +1,80 @@
+html
+    head
+        title Movie List
+        input#txtsearchMovie(type='text', placeholder='Enter Movie To Search')
+        button#btnSearch(style='margin-left: 5px') Search
+        button#btnMain(style='margin-left: 5px') Main Page
+        button#btnPrevious(style='margin-left: 5px') Previous Page
+        button#btnNext(style='margin-left: 5px') Next Page
+        div
+            div
+                table#tablelist
+            div
+                table#tabledetail
+    body
+        script(src='https://code.jquery.com/jquery-3.3.1.min.js')
+        script.
+            var url = "https://yts.am/api/v2/list_movies.json";
+            var pageUrl = "?page="
+            var searchUrl = "?query_term="
+            var pageNum = 1
+            var movieNum = 1
+            var listMi = 0
+            $(function () {
+                listMovies(url, pageUrl, pageNum)
+            })
+            var listMovies = function (url, extraUrl, key) {
+                $.post('/element/get', {url: url + extraUrl + key})
+                    .done(function (ret) {
+                        if (ret.success) {
+                            $("#tablelist").empty()
+                            $("#tabledetail").empty()
+                            if (listMi === 1){
+                                //  Cover(medium_cover_image) -- Title(title) -- Year(year) -- Rating(rating) -- Runtime(runtime) -- Genres(genres[]) -- Description(description_full)
+                                $("#tabledetail").append('<div><center><div><img src="' + ret.body.data.movies[0].medium_cover_image + '"><h1>' + ret.body.data.movies[0].title + '</h1></div><div><h2>Year: ' + ret.body.data.movies[0].year + '</h2></div><div><h2>Rating: ' + ret.body.data.movies[0].rating + '</h2></div><div><h2>' + ret.body.data.movies[0].runtime + ' minutes</h2></div><div><h2>Genres: ' + ret.body.data.movies[0].genres + '</h2></div><div><h3>' + ret.body.data.movies[0].description_full + '</h3></div></center></div>')
+                                listMi = 0
+                            } else if (listMi === 0){
+                                $("#tablelist").append('<tr><th>#</th><th style="padding-left: 20px">Cover</th><th style="padding-left: 20px">Movie Names</th><th style="padding-left: 20px">Year</th><th style="padding-left: 20px">Rating</th></tr>')
+                                for (var i in ret.body.data.movies) {
+                                    $("#tablelist").append('<tr><td>' + (movieNum) + ". " + '</td><td style="padding-left: 20px"><img src="' + ret.body.data.movies[i].small_cover_image + '"></td><td><center><a href="javascript:whenMovieClicked(\'' + ret.body.data.movies[i].title + '\')">' + ret.body.data.movies[i].title + '</a></center></td><td style="padding-left: 20px">' + ret.body.data.movies[i].year + '</td><td style="padding-left: 20px">' + ret.body.data.movies[i].rating + '</td></tr>')
+                                    movieNum++;
+                                }
+                            }
+                        }
+                    })
+            }
+            $('#btnNext').click(function (e) {
+                e.preventDefault();
+                $("#tablelist").empty()
+                pageNum++;
+                listMovies(url, pageUrl, pageNum)
+            })
+            $('#btnPrevious').click(function (e) {
+                e.preventDefault();
+                $("#tablelist").empty()
+                pageNum--;
+                pageNum >= 1 ? movieNum = parseInt(movieNum - 40) : movieNum = 1
+                listMovies(url, pageUrl, pageNum)
+            })
+            $('#btnSearch').click(function (e) {
+                e.preventDefault();
+                var key = $('#txtsearchMovie').val()
+                listMovies(url, searchUrl, key)
+                movieNum = 1
+                document.getElementById('txtsearchMovie').value = ''
+            })
+            $("#txtsearchMovie").keydown(function (event) {
+                if (event.keyCode === 13) {
+                    $("#btnSearch").click();
+                }
+            });
+            $('#btnMain').click(function (e) {
+                e.preventDefault();
+                pageNum = 1
+                movieNum = 1
+                listMovies(url, pageUrl, pageNum)
+            })
+            function whenMovieClicked(title) {
+                listMi = 1
+                listMovies(url, searchUrl, title)
+            }
